@@ -1,4 +1,12 @@
 {
-  "build": "pip install -r requirements.txt",
-  "start": "python massage_bot.py"
+  "services": [
+    {
+      "name": "massage-bot",
+      "build": {
+        "builder": "python",
+        "install": "pip install -r requirements.txt"
+      },
+      "start": "python massage_bot.py"
+    }
+  ]
 }
