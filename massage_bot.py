@@ -666,8 +666,10 @@ async def back_main(call: CallbackQuery):
 
 @dp.message(Command("admin"))
 async def admin(msg: Message):
-    if msg.from_user.id != ADMIN_ID:
-        return
+    if msg.from_user.id not in ADMINS:  # перевірка на кількох адмінів
+        return  # користувач не адмін, виходимо
+
+    # Клавіатура адмін-панелі
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="📢 Розсилка", callback_data="broadcast")],
@@ -680,6 +682,7 @@ async def admin(msg: Message):
             ],
         ]
     )
+
     await msg.answer("🔐 Адмін панель", reply_markup=kb)
 
 
