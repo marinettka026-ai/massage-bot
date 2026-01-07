@@ -18,7 +18,7 @@ import os
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID"))
+ADMINS = list(map(int, os.getenv("ADMINS").split(",")))
 
 
 MANAGER = "https://t.me/Lenmaxsym"
