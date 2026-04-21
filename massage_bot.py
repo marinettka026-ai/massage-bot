@@ -15,11 +15,29 @@ from aiogram.types import InputMediaPhoto
 from dotenv import load_dotenv
 import os
 
+import sqlite3
+
+conn = sqlite3.connect("users.db")
+cursor = conn.cursor()
+
+cursor.execute(
+    """
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY,
+    full_name TEXT,
+    username TEXT
+)
+"""
+)
+conn.commit()
+
+
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMINS = list(map(int, os.getenv("ADMINS").split(",")))
 
+print("🔥 VERSION 2 LOADED")
 
 MANAGER = "https://t.me/Lenmaxsym"
 MAP_URL = "https://maps.apple/p/sF_AhaQ4n170BQ"
@@ -439,6 +457,17 @@ def lang_kb():
     )
 
 
+def save_user(user_id, full_name, username):
+    cursor.execute(
+        """
+    INSERT OR IGNORE INTO users (user_id, full_name, username)
+    VALUES (?, ?, ?)
+    """,
+        (user_id, full_name, username),
+    )
+    conn.commit()
+
+
 def main_menu(lang):
     t = TEXTS[lang]["menu"]
     return InlineKeyboardMarkup(
@@ -494,6 +523,8 @@ def back_from_master(lang):
 # ---------- START ----------
 @dp.message(Command("start"))
 async def start(msg: Message):
+    save_user(msg.from_user.id, msg.from_user.full_name, msg.from_user.username)
+
     users_lang.pop(msg.from_user.id, None)
     await msg.answer(TEXTS["ua"]["lang"], reply_markup=lang_kb())
 
@@ -757,7 +788,10 @@ async def photo_master(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "stats")
 async def stats(call: CallbackQuery):
-    await call.message.answer(f"👥 Користувачів: {len(users_lang)}")
+    cursor.execute("SELECT COUNT(*) FROM users")
+    count = cursor.fetchone()[0]
+
+    await call.message.answer(f"👥 Користувачів: {count}")
 
 
 @dp.callback_query(F.data == "broadcast")
@@ -768,15 +802,22 @@ async def broadcast_start(call: CallbackQuery, state: FSMContext):
 
 @dp.message(Broadcast.waiting)
 async def broadcast_send(msg: Message, state: FSMContext):
-    for uid in users_lang:
+    cursor.execute("SELECT user_id FROM users")
+    users = cursor.fetchall()
+
+    sent = 0
+
+    for (uid,) in users:
         try:
             if msg.photo:
                 await bot.send_photo(uid, msg.photo[-1].file_id, caption=msg.caption)
             else:
                 await bot.send_message(uid, msg.text)
+            sent += 1
         except:
             pass
-    await msg.answer("✅ Розсилка завершена")
+
+    await msg.answer(f"✅ Відправлено: {sent}")
     await state.clear()
 
 
