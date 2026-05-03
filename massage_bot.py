@@ -20,15 +20,13 @@ import sqlite3
 conn = sqlite3.connect("users.db")
 cursor = conn.cursor()
 
-cursor.execute(
-    """
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY,
     full_name TEXT,
     username TEXT
 )
-"""
-)
+""")
 conn.commit()
 
 
@@ -190,29 +188,30 @@ SERVICES = {
         "Масажі": {
             "body": (
                 "Масаж всього тіла + банки\n\n"
-                "💶 60€\n\n"
+                "💶 70€\n\n"
                 "Курс:\n"
-                "5 сеансів — 275€\n"
-                "10 сеансів — 500€"
+                "5 сеансів — 325€\n"
+                "10 сеансів — 600€"
             ),
             "face": (
-                "Масаж обличчя\n\n" "30 хв — 30€\n" "1 год — 60€\n" "Курс 5 — 275€"
+                "Масаж обличчя\n\n" "30 хв — 40€\n" "1 год — 65€\n" "Курс 5 — 300€"
             ),
-            "four": ("Масаж 4 руки\n\n" "1 раз — 80€\n" "Курс 5 — 70€ за один "),
+            "four": ("Масаж 4 руки\n\n" "1 раз — 90€\n" "Курс 5 — 425 €  "),
         },
         "Обгортання": {
-            "lipofit": "Lipofit (живіт) — 135€",
-            "firming": "Firming (руки + живіт + ноги) — 245€",
-            "nio": "Nio Drain — 150€",
-            "fobro": "Fobrocel — 158€",
-            "cel": "Cel Term — 4×110€ / 1×27€",
-            "crio": "Crio Tonic — 4×110€ / 1×27€",
-            "detoxy": "Detoxy — 4×180€",
+            "lipofit": "Lipofit (живіт) — 175€",
+            "firming": "Firming (руки + живіт + ноги) — 285€",
+            "nio": "Nio Drain — 190€",
+            "fobro": "Fobrocel — 200€",
+            "cel": "Cel Term — 4 сеанси - 150€",
+            "crio": "Crio Tonic — 4 сеанси - 150€ ",
+            "detoxy": "Detoxy — 4 сеанси  - 220€",
         },
         "RF": {
-            "combo": ("Комбо масаж + обгортання + RF\n" "⏱ 1:30\n" "💶 85€"),
-            "rf": ("RF по зонах\n" "30 хв — 45€\n" "Курс 8 — 280€"),
+            "combo": ("Комбо масаж + обгортання + RF\n" "⏱ 1:30\n" "💶 115€ - один"),
+            "rf": ("RF по зонах\n" "30 хв — 55€\n" "Курс з 8 — 440€"),
         },
+        "Скраби": {"arosha": ("Скраб Arosha\n\n" "⏱ 30 хв\n\n" "💶 25€")},
     },
     "ru": {
         "Комплексы": {
@@ -232,27 +231,28 @@ SERVICES = {
         "Массажи": {
             "body": (
                 "Массаж всего тела + банки\n\n"
-                "💶 60€\n\n"
+                "💶 70€\n\n"
                 "Курс:\n"
-                "5 сеансов — 275€\n"
-                "10 сеансов — 500€"
+                "5 сеансов — 325€\n"
+                "10 сеансов — 600€"
             ),
-            "face": ("Массаж лица\n\n" "30 мин — 30€\n" "1 ч — 60€\n" "Курс 5 — 275€"),
-            "four": ("Массаж 4 руки\n\n" "1 раз — 80€\n" "Курс 5 — 70€ за один"),
+            "face": ("Массаж лица\n\n" "30 мин — 40€\n" "1 ч — 65€\n" "Курс 5 — 300€"),
+            "four": ("Массаж 4 руки\n\n" "1 раз — 90€\n" "Курс 5 — 425€"),
         },
         "Обертывания": {
-            "lipofit": "Lipofit (живот) — 135€",
-            "firming": "Firming (руки + живот + ноги) — 245€",
-            "nio": "Nio Drain — 150€",
-            "fobro": "Fobrocel — 158€",
-            "cel": "Cel Term — 4×110€ / 1×27€",
-            "crio": "Crio Tonic — 4×110€ / 1×27€",
-            "detoxy": "Detoxy — 4×180€",
+            "lipofit": "Lipofit (живот) — 175€",
+            "firming": "Firming (руки + живот + ноги) — 285€",
+            "nio": "Nio Drain — 190€",
+            "fobro": "Fobrocel — 200€",
+            "cel": "Cel Term — 4 сеанси - 150€",
+            "crio": "Crio Tonic — 4 сеанси - 150€",
+            "detoxy": "Detoxy — 4 сеанси - 220€",
         },
         "RF": {
-            "combo": ("Комбо массаж + обертывание + RF\n" "⏱ 1:30\n" "💶 85€"),
-            "rf": ("RF по зонам\n" "30 мин — 45€\n" "Курс 8 — 280€"),
+            "combo": ("Комбо массаж + обертывание + RF\n" "⏱ 1:30\n" "💶 115€ за один"),
+            "rf": ("RF по зонам\n" "30 мин — 55€\n" "Курс 8 — 220€"),
         },
+        "Скрабы": {"arosha": ("Скраб Arosha\n\n" "⏱ 30 мин\n\n" "💶 25€")},
     },
     "pt": {
         "Combos": {
@@ -272,29 +272,30 @@ SERVICES = {
         "Massagens": {
             "body": (
                 "Massagem de corpo inteiro + ventosas\n\n"
-                "💶 60€\n\n"
+                "💶 70€\n\n"
                 "Pacote:\n"
-                "5 sessões — 275€\n"
-                "10 sessões — 500€"
+                "5 sessões — 325€\n"
+                "10 sessões — 600€"
             ),
             "face": (
-                "Massagem facial\n\n" "30 min — 30€\n" "1 h — 60€\n" "Pacote 5 — 275€"
+                "Massagem facial\n\n" "30 min — 40€\n" "1 h — 65€\n" "Pacote 5 — 300€"
             ),
-            "four": ("Massagem 4 mãos\n\n" "1 sessão — 80€\n" "Pacote 5 — 70€ por um "),
+            "four": ("Massagem 4 mãos\n\n" "1 sessão — 90€\n" "Pacote 5 — 425€ "),
         },
         "Envolvimentos": {
-            "lipofit": "Lipofit (abdómen) — 135€",
-            "firming": "Firming (braços + abdómen + pernas) — 245€",
-            "nio": "Nio Drain — 150€",
-            "fobro": "Fobrocel — 158€",
-            "cel": "Cel Term — 4×110€ / 1×27€",
-            "crio": "Crio Tonic — 4×110€ / 1×27€",
-            "detoxy": "Detoxy — 4×180€",
+            "lipofit": "Lipofit (abdómen) — 175€",
+            "firming": "Firming (braços + abdómen + pernas) — 285€",
+            "nio": "Nio Drain — 190€",
+            "fobro": "Fobrocel — 200€",
+            "cel": "Cel Term — 4 sessões - 150€",
+            "crio": "Crio Tonic — 4 sessões - 150€",
+            "detoxy": "Detoxy — 4 sessões - 220€",
         },
         "RF": {
-            "combo": ("Massagem + envolvimento + RF\n" "⏱ 1:30\n" "💶 85€"),
-            "rf": ("RF por zonas\n" "30 min — 45€\n" "Pacote 8 — 280€"),
+            "combo": ("Massagem + envolvimento + RF\n" "⏱ 1:30\n" "💶 115€"),
+            "rf": ("RF por zonas\n" "30 min — 55€\n" "Pacote 8 — 440€"),
         },
+        "Esfoliação": {"arosha": ("Esfoliação Arosha\n\n" "⏱ 30 min\n\n" "💶 25€")},
     },
 }
 
