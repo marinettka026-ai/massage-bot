@@ -11,7 +11,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InputMediaPhoto
-
+from aiogram.client.session.aiohttp import AiohttpSession
 from dotenv import load_dotenv
 import os
 
@@ -40,7 +40,8 @@ print("🔥 VERSION 2 LOADED")
 MANAGER = "https://t.me/Lenmaxsym"
 MAP_URL = "https://maps.apple/p/sF_AhaQ4n170BQ"
 
-bot = Bot(BOT_TOKEN)
+session = AiohttpSession(timeout=60)
+bot = Bot(token=BOT_TOKEN, session=session)
 dp = Dispatcher()
 
 # ⚠️ МОВА ЗБЕРІГАЄТЬСЯ ТІЛЬКИ В СЕСІЇ
@@ -821,10 +822,12 @@ async def broadcast_send(msg: Message, state: FSMContext):
     await msg.answer(f"✅ Відправлено: {sent}")
     await state.clear()
 
-
 # ---------- RUN ----------
 async def main():
-    await dp.start_polling(bot)
+    print("🔥 VERSION 2 LOADED")
+
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 if __name__ == "__main__":
