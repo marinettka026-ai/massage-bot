@@ -541,7 +541,7 @@ async def set_lang(call: CallbackQuery):
 # ---------- SERVICES ----------
 @dp.callback_query(F.data == "menu_services")
 async def services(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
     kb = [
         [InlineKeyboardButton(text=c, callback_data=f"cat_{c}")] for c in SERVICES[lang]
     ]
@@ -556,7 +556,7 @@ async def services(call: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("cat_"))
 async def category(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
     cat = call.data[4:]
     kb = [
         [
@@ -577,7 +577,7 @@ async def category(call: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("service_"))
 async def service(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
     _, cat, key = call.data.split("_", 2)
     await call.message.edit_text(
         SERVICES[lang][cat][key], reply_markup=back_book(lang, cat)
@@ -589,7 +589,7 @@ async def service(call: CallbackQuery):
 
 @dp.callback_query(F.data == "menu_masters")
 async def masters(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
 
     kb = [
         [InlineKeyboardButton(text=name, callback_data=f"master_{name}")]
@@ -621,7 +621,7 @@ async def master(call: CallbackQuery):
 # ---------- LOCATION / ABOUT ----------
 @dp.callback_query(F.data == "menu_location")
 async def location(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=TEXTS[lang]["open_map"], url=MAP_URL)],
@@ -633,7 +633,7 @@ async def location(call: CallbackQuery):
 
 @dp.callback_query(F.data == "menu_about")
 async def about(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
 
     media = []
     for i in sorted(ABOUT_PHOTOS.keys()):
@@ -649,7 +649,7 @@ async def about(call: CallbackQuery):
 
 @dp.callback_query(F.data == "back_services")
 async def back_services(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
     kb = [
         [InlineKeyboardButton(text=c, callback_data=f"cat_{c}")] for c in SERVICES[lang]
     ]
@@ -666,7 +666,7 @@ async def back_services(call: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("back_cat_"))
 async def back_category(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
     cat = call.data.replace("back_cat_", "")
 
     kb = [
@@ -690,7 +690,7 @@ async def back_category(call: CallbackQuery):
 
 @dp.callback_query(F.data == "back_main")
 async def back_main(call: CallbackQuery):
-    lang = users_lang[call.from_user.id]
+    lang = users_lang.get(call.from_user.id, "ua")
     await call.message.edit_text(TEXTS[lang]["welcome"], reply_markup=main_menu(lang))
 
 
@@ -821,6 +821,7 @@ async def broadcast_send(msg: Message, state: FSMContext):
 
     await msg.answer(f"✅ Відправлено: {sent}")
     await state.clear()
+
 
 # ---------- RUN ----------
 async def main():
