@@ -15,20 +15,21 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from dotenv import load_dotenv
 import os
 
-import sqlite3
+import psycopg2
 
-conn = sqlite3.connect("users.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+conn = psycopg2.connect(DATABASE_URL)
 cursor = conn.cursor()
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY,
+    user_id BIGINT PRIMARY KEY,
     full_name TEXT,
     username TEXT
 )
 """)
 conn.commit()
-
 
 load_dotenv()
 
@@ -462,9 +463,10 @@ def lang_kb():
 def save_user(user_id, full_name, username):
     cursor.execute(
         """
-    INSERT OR IGNORE INTO users (user_id, full_name, username)
-    VALUES (?, ?, ?)
-    """,
+        INSERT INTO users (user_id, full_name, username)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (user_id) DO NOTHING
+        """,
         (user_id, full_name, username),
     )
     conn.commit()
