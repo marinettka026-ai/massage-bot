@@ -6,11 +6,11 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     InputMediaPhoto,
+    InputMediaVideo,
 )
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import InputMediaPhoto
 from aiogram.client.session.aiohttp import AiohttpSession
 from dotenv import load_dotenv
 import os
@@ -36,6 +36,19 @@ def init_db():
                     user_id BIGINT PRIMARY KEY,
                     full_name TEXT,
                     username TEXT
+                )
+                """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS master_photos (
+                    master_key TEXT PRIMARY KEY,
+                    file_id TEXT NOT NULL
+                )
+                """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS about_media (
+                    position INTEGER PRIMARY KEY,
+                    media_type TEXT NOT NULL,
+                    file_id TEXT NOT NULL
                 )
                 """)
 
@@ -214,6 +227,14 @@ SERVICES = {
                 "Послугу надає тільки майстер Сергій."
             ),
         },
+        "Консультації": {
+            "neurology_consultation": (
+                "Консультація невролога\n\n"
+                "Консультація щодо захворювань центральної та периферичної нервової системи.\n\n"
+                "50 €\n\n"
+                "Консультацію проводить тільки майстер Сергій."
+            ),
+        },
         "Обгортання": {
             "lipofit": "Lipofit (живіт) — 175€",
             "firming": "Firming (руки + живіт + ноги) — 285€",
@@ -261,6 +282,14 @@ SERVICES = {
                 "Курс из 5 — 275 €\n"
                 "Курс из 10 — 500 €\n\n"
                 "Услугу предоставляет только мастер Сергей."
+            ),
+        },
+        "Консультации": {
+            "neurology_consultation": (
+                "Консультация невролога\n\n"
+                "Консультация по заболеваниям центральной и периферической нервной системы.\n\n"
+                "50 €\n\n"
+                "Консультацию проводит только мастер Сергей."
             ),
         },
         "Обертывания": {
@@ -312,6 +341,14 @@ SERVICES = {
                 "Pacote de 5 sessões — 275 €\n"
                 "Pacote de 10 sessões — 500 €\n\n"
                 "Serviço realizado exclusivamente pelo Mestre Sérgio."
+            ),
+        },
+        "Consultas": {
+            "neurology_consultation": (
+                "Consulta de neurologia\n\n"
+                "Consulta sobre doenças do sistema nervoso central e periférico.\n\n"
+                "50 €\n\n"
+                "Consulta realizada exclusivamente pelo Mestre Sérgio."
             ),
         },
         "Envolvimentos": {
@@ -385,6 +422,7 @@ MASTERS = {
             "• м’язове напруження та спазми\n"
             "• проблеми з опорно-руховим апаратом\n"
             "• неврологічні симптоми\n"
+            "• консультації щодо захворювань центральної та периферичної нервової системи\n"
             "• відновлення та підтримка здоров’я спини\n\n"
             "Ваше здоров’я — у руках спеціаліста, який розуміє не лише м’язи, "
             "а й причини виникнення проблеми."
@@ -442,6 +480,7 @@ MASTERS = {
             "• мышечное напряжение и спазмы\n"
             "• проблемы с опорно-двигательным аппаратом\n"
             "• неврологические симптомы\n"
+            "• консультации по заболеваниям центральной и периферической нервной системы\n"
             "• восстановление и поддержание здоровья позвоночника\n\n"
             "Ваше здоровье — в руках специалиста, который понимает не только мышцы, "
             "но и причины возникновения проблемы."
@@ -498,6 +537,7 @@ MASTERS = {
             "• tensão muscular e espasmos\n"
             "• problemas do sistema músculo-esquelético\n"
             "• sintomas neurológicos\n"
+            "• consultas sobre doenças do sistema nervoso central e periférico\n"
             "• recuperação e manutenção da saúde da coluna\n\n"
             "A sua saúde está nas mãos de um profissional que compreende não apenas os músculos, "
             "mas também as causas dos problemas."
@@ -526,26 +566,64 @@ MASTERS_PHOTOS = {
     },
 }
 
-MASTER_NAME_MAP = {
-    "ольга": {"ua": "Ольга", "ru": "Ольга", "pt": "Olga"},
+MASTER_PHOTO_CHOICES = {
     "olga": {"ua": "Ольга", "ru": "Ольга", "pt": "Olga"},
-    "олена": {"ua": "Олена", "ru": "Елена", "pt": "Elena"},
-    "елена": {"ua": "Олена", "ru": "Елена", "pt": "Elena"},
     "elena": {"ua": "Олена", "ru": "Елена", "pt": "Elena"},
-    "галя": {"ua": "Галя", "ru": "Галя", "pt": "Galya"},
     "galya": {"ua": "Галя", "ru": "Галя", "pt": "Galya"},
-    "halya": {"ua": "Галя", "ru": "Галя", "pt": "Galya"},
-    "сергій": {"ua": "Сергій", "ru": "Сергей", "pt": "Sérgio"},
-    "сергей": {"ua": "Сергій", "ru": "Сергей", "pt": "Sérgio"},
-    "sérgio": {"ua": "Сергій", "ru": "Сергей", "pt": "Sérgio"},
     "sergio": {"ua": "Сергій", "ru": "Сергей", "pt": "Sérgio"},
 }
 
-ABOUT_PHOTOS = {
-    1: None,
-    2: None,
-    3: None,
+MASTER_SLUG_BY_NAME = {
+    name: slug
+    for slug, names in MASTER_PHOTO_CHOICES.items()
+    for name in names.values()
 }
+
+
+def save_master_photo(master_key, file_id):
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO master_photos (master_key, file_id)
+                VALUES (%s, %s)
+                ON CONFLICT (master_key) DO UPDATE SET file_id = EXCLUDED.file_id
+                """,
+                (master_key, file_id),
+            )
+
+
+def get_master_photo(master_key):
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT file_id FROM master_photos WHERE master_key = %s", (master_key,)
+            )
+            row = cursor.fetchone()
+    return row[0] if row else None
+
+
+def save_about_media(position, media_type, file_id):
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO about_media (position, media_type, file_id)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (position) DO UPDATE
+                SET media_type = EXCLUDED.media_type, file_id = EXCLUDED.file_id
+                """,
+                (position, media_type, file_id),
+            )
+
+
+def get_about_media():
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT position, media_type, file_id FROM about_media ORDER BY position"
+            )
+            return cursor.fetchall()
 
 
 # ---------- KEYBOARDS ----------
@@ -712,9 +790,12 @@ async def masters(call: CallbackQuery):
 async def master(call: CallbackQuery):
     lang = users_lang.get(call.from_user.id, "ua")
     key = call.data.replace("master_", "")
-    photo_id = MASTERS_PHOTOS[lang].get(key)
+    master_slug = MASTER_SLUG_BY_NAME.get(key)
+    photo_id = get_master_photo(master_slug) if master_slug else None
 
-    # Відправляємо фото, якщо воно вже додане; інакше показуємо опис без фото
+    if not photo_id:
+        photo_id = MASTERS_PHOTOS[lang].get(key)
+
     if photo_id:
         await call.message.answer_photo(
             photo=photo_id,
@@ -743,17 +824,29 @@ async def location(call: CallbackQuery):
 @dp.callback_query(F.data == "menu_about")
 async def about(call: CallbackQuery):
     lang = users_lang.get(call.from_user.id, "ua")
+    saved_media = get_about_media()
+
+    if not saved_media:
+        await call.message.answer(TEXTS[lang]["about_text"])
+        return
+
+    if len(saved_media) == 1:
+        _, media_type, file_id = saved_media[0]
+        if media_type == "video":
+            await call.message.answer_video(file_id, caption=TEXTS[lang]["about_text"])
+        else:
+            await call.message.answer_photo(file_id, caption=TEXTS[lang]["about_text"])
+        return
 
     media = []
-    for i in sorted(ABOUT_PHOTOS.keys()):
-        if ABOUT_PHOTOS[i]:
-            caption = TEXTS[lang]["about_text"] if len(media) == 0 else None
-            media.append(InputMediaPhoto(media=ABOUT_PHOTOS[i], caption=caption))
+    for index, (_, media_type, file_id) in enumerate(saved_media):
+        caption = TEXTS[lang]["about_text"] if index == 0 else None
+        if media_type == "video":
+            media.append(InputMediaVideo(media=file_id, caption=caption))
+        else:
+            media.append(InputMediaPhoto(media=file_id, caption=caption))
 
-    if media:
-        await call.message.answer_media_group(media)
-    else:
-        await call.message.answer(TEXTS[lang]["about_text"])
+    await call.message.answer_media_group(media)
 
 
 @dp.callback_query(F.data == "back_services")
@@ -818,7 +911,7 @@ async def admin(msg: Message):
             [InlineKeyboardButton(text="📊 Статистика", callback_data="stats")],
             [
                 InlineKeyboardButton(
-                    text="📸 Оновити фото майстра або салону",
+                    text="📸 Оновити фото / відео",
                     callback_data="update_photo",
                 )
             ],
@@ -838,70 +931,103 @@ async def start_photo_update(call: CallbackQuery, state: FSMContext):
                     text="📸 Фото майстра", callback_data="photo_master"
                 )
             ],
-            [InlineKeyboardButton(text="🏠 Фото салону", callback_data="photo_about")],
+            [
+                InlineKeyboardButton(
+                    text="🏠 Фото / відео салону", callback_data="media_about"
+                )
+            ],
         ]
     )
     await call.message.answer("Оберіть, що хочете оновити:", reply_markup=kb)
-
-
-# ---------- Хендлер для прийому фото ----------
-@dp.message(PhotoUpdate.waiting, F.photo)
-async def receive_photo(msg: Message, state: FSMContext):
-    data = await state.get_data()
-    mode = data.get("mode")
-
-    file_id = msg.photo[-1].file_id
-    caption = (msg.caption or "").strip()
-
-    # --- ФОТО САЛОНУ ---
-    if mode == "about":
-        if not caption.isdigit():
-            await msg.answer("❌ Вкажіть номер фото у підписі (1, 2, 3 …)")
-            return
-
-        ABOUT_PHOTOS[int(caption)] = file_id
-        await msg.answer(f"✅ Фото салону №{caption} збережено")
-
-    # --- ФОТО МАЙСТРА ---
-    elif mode == "master":
-        if not caption:
-            await msg.answer("❌ Вкажіть імʼя майстра в підписі")
-            return
-
-        master_names = MASTER_NAME_MAP.get(caption.casefold())
-        if not master_names:
-            await msg.answer(
-                "❌ Майстра не знайдено. Вкажіть імʼя так, як воно написане в боті."
-            )
-            return
-
-        for lang, master_name in master_names.items():
-            MASTERS_PHOTOS[lang][master_name] = file_id
-
-        await msg.answer(f"✅ Фото майстра «{caption}» оновлено для всіх мов")
-
-    else:
-        await msg.answer("❌ Невідомий режим")
-
-    await state.clear()
-
-
-@dp.callback_query(F.data == "photo_about")
-async def photo_about(call: CallbackQuery, state: FSMContext):
-    await state.update_data(mode="about")
-    await state.set_state(PhotoUpdate.waiting)
-    await call.message.answer(
-        "📸 Надішліть фото салону\n\nУ підписі вкажіть номер (1,2,3…)"
-    )
+    await call.answer()
 
 
 @dp.callback_query(F.data == "photo_master")
 async def photo_master(call: CallbackQuery, state: FSMContext):
-    await state.update_data(mode="master")
+    await state.clear()
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Ольга", callback_data="master_photo_olga")],
+            [InlineKeyboardButton(text="Олена", callback_data="master_photo_elena")],
+            [InlineKeyboardButton(text="Галя", callback_data="master_photo_galya")],
+            [InlineKeyboardButton(text="Сергій", callback_data="master_photo_sergio")],
+        ]
+    )
+    await call.message.answer("Оберіть майстра:", reply_markup=kb)
+    await call.answer()
+
+
+@dp.callback_query(F.data.startswith("master_photo_"))
+async def choose_master_photo(call: CallbackQuery, state: FSMContext):
+    master_key = call.data.replace("master_photo_", "")
+    if master_key not in MASTER_PHOTO_CHOICES:
+        await call.answer("Майстра не знайдено", show_alert=True)
+        return
+    await state.update_data(mode="master", master_key=master_key)
+    await state.set_state(PhotoUpdate.waiting)
+    display_name = MASTER_PHOTO_CHOICES[master_key]["ua"]
+    await call.message.answer(f"📸 Надішліть нове фото майстра {display_name}.")
+    await call.answer()
+
+
+@dp.callback_query(F.data == "media_about")
+async def media_about(call: CallbackQuery, state: FSMContext):
+    await state.update_data(mode="about")
     await state.set_state(PhotoUpdate.waiting)
     await call.message.answer(
-        "📸 Надішліть фото майстра\n\nУ підписі вкажіть імʼя майстра"
+        "🏠 Надішліть фото або відео салону.\n\n"
+        "У підписі вкажіть номер позиції: 1, 2, 3 …\n"
+        "Якщо надіслати нове медіа з уже існуючим номером — воно замінить попереднє."
     )
+    await call.answer()
+
+
+@dp.message(PhotoUpdate.waiting)
+async def receive_media(msg: Message, state: FSMContext):
+    data = await state.get_data()
+    mode = data.get("mode")
+
+    if mode == "master":
+        if not msg.photo:
+            await msg.answer("❌ Для майстра потрібно надіслати саме фото.")
+            return
+        master_key = data.get("master_key")
+        if master_key not in MASTER_PHOTO_CHOICES:
+            await msg.answer(
+                "❌ Не вдалося визначити майстра. Спробуйте ще раз через /admin."
+            )
+            await state.clear()
+            return
+        file_id = msg.photo[-1].file_id
+        save_master_photo(master_key, file_id)
+        display_name = MASTER_PHOTO_CHOICES[master_key]["ua"]
+        await msg.answer(f"✅ Фото майстра {display_name} збережено.")
+        await state.clear()
+        return
+
+    if mode == "about":
+        caption = (msg.caption or "").strip()
+        if not caption.isdigit() or int(caption) < 1 or int(caption) > 10:
+            await msg.answer("❌ У підписі вкажіть номер від 1 до 10.")
+            return
+        if msg.photo:
+            media_type = "photo"
+            file_id = msg.photo[-1].file_id
+        elif msg.video:
+            media_type = "video"
+            file_id = msg.video.file_id
+        else:
+            await msg.answer("❌ Надішліть фото або відео.")
+            return
+        position = int(caption)
+        save_about_media(position, media_type, file_id)
+        media_name = "Фото" if media_type == "photo" else "Відео"
+        await msg.answer(f"✅ {media_name} салону №{position} збережено.")
+        await state.clear()
+        return
+
+    await msg.answer("❌ Невідомий режим. Відкрийте /admin і спробуйте ще раз.")
+    await state.clear()
 
 
 @dp.callback_query(F.data == "stats")
