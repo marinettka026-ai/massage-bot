@@ -626,6 +626,22 @@ def get_about_media():
             return cursor.fetchall()
 
 
+def add_about_media(media_type, file_id):
+    """Додає фото/відео в кінець галереї салону без ручної нумерації."""
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT COALESCE(MAX(position), 0) + 1 FROM about_media")
+            position = cursor.fetchone()[0]
+            cursor.execute(
+                """
+                INSERT INTO about_media (position, media_type, file_id)
+                VALUES (%s, %s, %s)
+                """,
+                (position, media_type, file_id),
+            )
+    return position
+
+
 # ---------- KEYBOARDS ----------
 def lang_kb():
     return InlineKeyboardMarkup(
@@ -974,11 +990,29 @@ async def choose_master_photo(call: CallbackQuery, state: FSMContext):
 async def media_about(call: CallbackQuery, state: FSMContext):
     await state.update_data(mode="about")
     await state.set_state(PhotoUpdate.waiting)
-    await call.message.answer(
-        "🏠 Надішліть фото або відео салону.\n\n"
-        "У підписі вкажіть номер позиції: 1, 2, 3 …\n"
-        "Якщо надіслати нове медіа з уже існуючим номером — воно замінить попереднє."
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="✅ Завершити додавання", callback_data="finish_about_media"
+                )
+            ]
+        ]
     )
+    await call.message.answer(
+        "🏠 Надішліть одразу всі потрібні фото та/або відео салону.\n\n"
+        "Можна вибрати 7–8 файлів і відправити їх одним альбомом. "
+        "Нічого підписувати або нумерувати не потрібно.\n\n"
+        "Коли завершите — натисніть «✅ Завершити додавання».",
+        reply_markup=kb,
+    )
+    await call.answer()
+
+
+@dp.callback_query(F.data == "finish_about_media")
+async def finish_about_media(call: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await call.message.answer("✅ Додавання фото / відео салону завершено.")
     await call.answer()
 
 
@@ -1006,10 +1040,6 @@ async def receive_media(msg: Message, state: FSMContext):
         return
 
     if mode == "about":
-        caption = (msg.caption or "").strip()
-        if not caption.isdigit() or int(caption) < 1 or int(caption) > 10:
-            await msg.answer("❌ У підписі вкажіть номер від 1 до 10.")
-            return
         if msg.photo:
             media_type = "photo"
             file_id = msg.photo[-1].file_id
@@ -1019,11 +1049,10 @@ async def receive_media(msg: Message, state: FSMContext):
         else:
             await msg.answer("❌ Надішліть фото або відео.")
             return
-        position = int(caption)
-        save_about_media(position, media_type, file_id)
-        media_name = "Фото" if media_type == "photo" else "Відео"
-        await msg.answer(f"✅ {media_name} салону №{position} збережено.")
-        await state.clear()
+
+        add_about_media(media_type, file_id)
+        # Стан навмисно НЕ очищаємо: Telegram надсилає елементи альбому
+        # окремими повідомленнями, тому бот має прийняти кожен файл.
         return
 
     await msg.answer("❌ Невідомий режим. Відкрийте /admin і спробуйте ще раз.")
