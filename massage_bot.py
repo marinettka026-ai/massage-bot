@@ -17,24 +17,30 @@ import os
 
 import psycopg2
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-conn = psycopg2.connect(DATABASE_URL)
-cursor = conn.cursor()
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    user_id BIGINT PRIMARY KEY,
-    full_name TEXT,
-    username TEXT
-)
-""")
-conn.commit()
-
 load_dotenv()
 
+DATABASE_URL = os.getenv("DATABASE_URL")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMINS = list(map(int, os.getenv("ADMINS").split(",")))
+
+
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URL)
+
+
+def init_db():
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id BIGINT PRIMARY KEY,
+                    full_name TEXT,
+                    username TEXT
+                )
+                """)
+
+
+init_db()
 
 print("🔥 VERSION 2 LOADED")
 
@@ -199,6 +205,14 @@ SERVICES = {
                 "Масаж обличчя\n\n" "30 хв — 40€\n" "1 год — 65€\n" "Курс 5 — 300€"
             ),
             "four": ("Масаж 4 руки\n\n" "1 раз — 90€\n" "Курс 5 — 425 €  "),
+            "neuro": (
+                "Нейром’язова терапія всього тіла\n\n"
+                "⏱ 1 година\n\n"
+                "60 €\n"
+                "Курс з 5 — 275 €\n"
+                "Курс з 10 — 500 €\n\n"
+                "Послугу надає тільки майстер Сергій."
+            ),
         },
         "Обгортання": {
             "lipofit": "Lipofit (живіт) — 175€",
@@ -240,6 +254,14 @@ SERVICES = {
             ),
             "face": ("Массаж лица\n\n" "30 мин — 40€\n" "1 ч — 65€\n" "Курс 5 — 300€"),
             "four": ("Массаж 4 руки\n\n" "1 раз — 90€\n" "Курс 5 — 425€"),
+            "neuro": (
+                "Нейромышечная терапия всего тела\n\n"
+                "⏱ 1 час\n\n"
+                "60 €\n"
+                "Курс из 5 — 275 €\n"
+                "Курс из 10 — 500 €\n\n"
+                "Услугу предоставляет только мастер Сергей."
+            ),
         },
         "Обертывания": {
             "lipofit": "Lipofit (живот) — 175€",
@@ -283,6 +305,14 @@ SERVICES = {
                 "Massagem facial\n\n" "30 min — 40€\n" "1 h — 65€\n" "Pacote 5 — 300€"
             ),
             "four": ("Massagem 4 mãos\n\n" "1 sessão — 90€\n" "Pacote 5 — 425€ "),
+            "neuro": (
+                "Terapia neuromuscular de corpo inteiro\n\n"
+                "⏱ 1 hora\n\n"
+                "60 €\n"
+                "Pacote de 5 sessões — 275 €\n"
+                "Pacote de 10 sessões — 500 €\n\n"
+                "Serviço realizado exclusivamente pelo Mestre Sérgio."
+            ),
         },
         "Envolvimentos": {
             "lipofit": "Lipofit (abdómen) — 175€",
@@ -342,6 +372,23 @@ MASTERS = {
             "• відновлення енергії і гарного настрою\n\n"
             "💖 Кожен сеанс з Галею — маленький ритуал турботи про себе"
         ),
+        "Сергій": (
+            "Сергій — досвідчений спеціаліст, лікар-невропатолог, який спеціалізується "
+            "на діагностиці та комплексному підході до захворювань нервової системи та спини.\n\n"
+            "У своїй роботі він поєднує медичні знання та практичний досвід, допомагаючи "
+            "працювати з болем, напруженням і дискомфортом у спині, шиї та м’язах.\n\n"
+            "Особлива увага приділяється індивідуальному підходу до кожного клієнта — "
+            "з урахуванням його стану, скарг та особливостей організму.\n\n"
+            "Основні напрямки роботи:\n"
+            "• захворювання та болі у спині\n"
+            "• біль у шиї та попереку\n"
+            "• м’язове напруження та спазми\n"
+            "• проблеми з опорно-руховим апаратом\n"
+            "• неврологічні симптоми\n"
+            "• відновлення та підтримка здоров’я спини\n\n"
+            "Ваше здоров’я — у руках спеціаліста, який розуміє не лише м’язи, "
+            "а й причини виникнення проблеми."
+        ),
     },
     "ru": {
         "Ольга": (
@@ -382,6 +429,23 @@ MASTERS = {
             "• восстановление энергии и хорошего настроения\n\n"
             "💖 Каждый сеанс с Галей — маленький ритуал заботы о себе"
         ),
+        "Сергей": (
+            "Сергей — опытный специалист, врач-невропатолог, специализирующийся на диагностике "
+            "и комплексном подходе к заболеваниям нервной системы и позвоночника.\n\n"
+            "В своей работе он сочетает медицинские знания и практический опыт, помогая работать "
+            "с болью, напряжением и дискомфортом в спине, шее и мышцах.\n\n"
+            "Особое внимание уделяет индивидуальному подходу к каждому клиенту — "
+            "с учётом его состояния, жалоб и особенностей организма.\n\n"
+            "Основные направления работы:\n"
+            "• заболевания и боли в спине\n"
+            "• боли в шее и пояснице\n"
+            "• мышечное напряжение и спазмы\n"
+            "• проблемы с опорно-двигательным аппаратом\n"
+            "• неврологические симптомы\n"
+            "• восстановление и поддержание здоровья позвоночника\n\n"
+            "Ваше здоровье — в руках специалиста, который понимает не только мышцы, "
+            "но и причины возникновения проблемы."
+        ),
     },
     "pt": {
         "Olga": (
@@ -421,6 +485,23 @@ MASTERS = {
             "• renovação de energia e bom humor\n\n"
             "💖 Cada sessão com Halya é um pequeno ritual de cuidado consigo mesmo"
         ),
+        "Sérgio": (
+            "Sérgio é um profissional experiente, médico neurologista, especializado no diagnóstico "
+            "e numa abordagem abrangente das doenças do sistema nervoso e da coluna vertebral.\n\n"
+            "No seu trabalho, combina conhecimentos médicos com experiência prática, ajudando a trabalhar "
+            "a dor, a tensão e o desconforto nas costas, no pescoço e nos músculos.\n\n"
+            "Dedica especial atenção a uma abordagem individualizada de cada cliente, tendo em conta "
+            "o seu estado, as suas queixas e as particularidades do organismo.\n\n"
+            "Principais áreas de atuação:\n"
+            "• dores e patologias da coluna vertebral\n"
+            "• dores no pescoço e na zona lombar\n"
+            "• tensão muscular e espasmos\n"
+            "• problemas do sistema músculo-esquelético\n"
+            "• sintomas neurológicos\n"
+            "• recuperação e manutenção da saúde da coluna\n\n"
+            "A sua saúde está nas mãos de um profissional que compreende não apenas os músculos, "
+            "mas também as causas dos problemas."
+        ),
     },
 }
 
@@ -429,17 +510,35 @@ MASTERS_PHOTOS = {
         "Ольга": "AgACAgIAAxkBAAIDNWlSk9KgJ2VN2nzrHPTVBDXS2RRGAALyEWsbwVKRShhJVL_CxfTJAQADAgADeQADNgQ",
         "Олена": "AgACAgIAAxkBAAIDY2lS2WaxA-bmLL-SvdLCpIv3iyEGAAJiDWsbwVKZSjqH4kpaqwSTAQADAgADeQADNgQ",
         "Галя": "AgACAgIAAxkBAAIDZmlS2W63NbaEJt3WgGbQRimPIxhLAAJjDWsbwVKZSkUcFQRdAXGiAQADAgADeQADNgQ",
+        "Сергій": None,
     },
     "ru": {
         "Ольга": "AgACAgIAAxkBAAIDNWlSk9KgJ2VN2nzrHPTVBDXS2RRGAALyEWsbwVKRShhJVL_CxfTJAQADAgADeQADNgQ",
         "Елена": "AgACAgIAAxkBAAIDY2lS2WaxA-bmLL-SvdLCpIv3iyEGAAJiDWsbwVKZSjqH4kpaqwSTAQADAgADeQADNgQ",
         "Галя": "AgACAgIAAxkBAAIDZmlS2W63NbaEJt3WgGbQRimPIxhLAAJjDWsbwVKZSkUcFQRdAXGiAQADAgADeQADNgQ",
+        "Сергей": None,
     },
     "pt": {
         "Olga": "AgACAgIAAxkBAAIDNWlSk9KgJ2VN2nzrHPTVBDXS2RRGAALyEWsbwVKRShhJVL_CxfTJAQADAgADeQADNgQ",
         "Elena": "AgACAgIAAxkBAAIDY2lS2WaxA-bmLL-SvdLCpIv3iyEGAAJiDWsbwVKZSjqH4kpaqwSTAQADAgADeQADNgQ",
         "Galya": "AgACAgIAAxkBAAIDZmlS2W63NbaEJt3WgGbQRimPIxhLAAJjDWsbwVKZSkUcFQRdAXGiAQADAgADeQADNgQ",
+        "Sérgio": None,
     },
+}
+
+MASTER_NAME_MAP = {
+    "ольга": {"ua": "Ольга", "ru": "Ольга", "pt": "Olga"},
+    "olga": {"ua": "Ольга", "ru": "Ольга", "pt": "Olga"},
+    "олена": {"ua": "Олена", "ru": "Елена", "pt": "Elena"},
+    "елена": {"ua": "Олена", "ru": "Елена", "pt": "Elena"},
+    "elena": {"ua": "Олена", "ru": "Елена", "pt": "Elena"},
+    "галя": {"ua": "Галя", "ru": "Галя", "pt": "Galya"},
+    "galya": {"ua": "Галя", "ru": "Галя", "pt": "Galya"},
+    "halya": {"ua": "Галя", "ru": "Галя", "pt": "Galya"},
+    "сергій": {"ua": "Сергій", "ru": "Сергей", "pt": "Sérgio"},
+    "сергей": {"ua": "Сергій", "ru": "Сергей", "pt": "Sérgio"},
+    "sérgio": {"ua": "Сергій", "ru": "Сергей", "pt": "Sérgio"},
+    "sergio": {"ua": "Сергій", "ru": "Сергей", "pt": "Sérgio"},
 }
 
 ABOUT_PHOTOS = {
@@ -461,15 +560,16 @@ def lang_kb():
 
 
 def save_user(user_id, full_name, username):
-    cursor.execute(
-        """
-        INSERT INTO users (user_id, full_name, username)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (user_id) DO NOTHING
-        """,
-        (user_id, full_name, username),
-    )
-    conn.commit()
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO users (user_id, full_name, username)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id) DO NOTHING
+                """,
+                (user_id, full_name, username),
+            )
 
 
 def main_menu(lang):
@@ -612,12 +712,19 @@ async def masters(call: CallbackQuery):
 async def master(call: CallbackQuery):
     lang = users_lang.get(call.from_user.id, "ua")
     key = call.data.replace("master_", "")
-    photo_id = MASTERS_PHOTOS[lang][key]
+    photo_id = MASTERS_PHOTOS[lang].get(key)
 
-    # Відправляємо нове повідомлення з фото та описом
-    await call.message.answer_photo(
-        photo=photo_id, caption=MASTERS[lang][key], reply_markup=back_from_master(lang)
-    )
+    # Відправляємо фото, якщо воно вже додане; інакше показуємо опис без фото
+    if photo_id:
+        await call.message.answer_photo(
+            photo=photo_id,
+            caption=MASTERS[lang][key],
+            reply_markup=back_from_master(lang),
+        )
+    else:
+        await call.message.answer(
+            MASTERS[lang][key], reply_markup=back_from_master(lang)
+        )
 
 
 # ---------- LOCATION / ABOUT ----------
@@ -761,10 +868,17 @@ async def receive_photo(msg: Message, state: FSMContext):
             await msg.answer("❌ Вкажіть імʼя майстра в підписі")
             return
 
-        MASTERS_PHOTOS["ua"][caption] = file_id
-        MASTERS_PHOTOS["ru"][caption] = file_id
-        MASTERS_PHOTOS["pt"][caption] = file_id
-        await msg.answer(f"✅ Фото майстра «{caption}» оновлено")
+        master_names = MASTER_NAME_MAP.get(caption.casefold())
+        if not master_names:
+            await msg.answer(
+                "❌ Майстра не знайдено. Вкажіть імʼя так, як воно написане в боті."
+            )
+            return
+
+        for lang, master_name in master_names.items():
+            MASTERS_PHOTOS[lang][master_name] = file_id
+
+        await msg.answer(f"✅ Фото майстра «{caption}» оновлено для всіх мов")
 
     else:
         await msg.answer("❌ Невідомий режим")
@@ -792,10 +906,13 @@ async def photo_master(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "stats")
 async def stats(call: CallbackQuery):
-    cursor.execute("SELECT COUNT(*) FROM users")
-    count = cursor.fetchone()[0]
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM users")
+            count = cursor.fetchone()[0]
 
     await call.message.answer(f"👥 Користувачів: {count}")
+    await call.answer()
 
 
 @dp.callback_query(F.data == "broadcast")
@@ -806,8 +923,10 @@ async def broadcast_start(call: CallbackQuery, state: FSMContext):
 
 @dp.message(Broadcast.waiting)
 async def broadcast_send(msg: Message, state: FSMContext):
-    cursor.execute("SELECT user_id FROM users")
-    users = cursor.fetchall()
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT user_id FROM users")
+            users = cursor.fetchall()
 
     sent = 0
 
