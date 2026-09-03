@@ -772,7 +772,7 @@ async def masters(call: CallbackQuery):
     lang = users_lang.get(call.from_user.id, "ua")
 
     kb = [
-        [InlineKeyboardButton(text=name, callback_data=f"master_{name}")]
+        [InlineKeyboardButton(text=name, callback_data=f"view_master_{name}")]
         for name in MASTERS[lang]
     ]
     kb.append(
@@ -786,10 +786,10 @@ async def masters(call: CallbackQuery):
     )
 
 
-@dp.callback_query(F.data.startswith("master_"))
+@dp.callback_query(F.data.startswith("view_master_"))
 async def master(call: CallbackQuery):
     lang = users_lang.get(call.from_user.id, "ua")
-    key = call.data.replace("master_", "")
+    key = call.data.replace("view_master_", "")
     master_slug = MASTER_SLUG_BY_NAME.get(key)
     photo_id = get_master_photo(master_slug) if master_slug else None
 
